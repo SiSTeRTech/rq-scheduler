@@ -7,12 +7,12 @@ if platform.python_version() < '2.7':
     tests_require.append('discover==0.4.0')
 
 setup(
-    name='rq-scheduler',
+    name='sister-rqs',
     version='0.6.0',
     author='Selwin Ong',
     author_email='selwin.ong@gmail.com',
     packages=['rq_scheduler'],
-    url='https://github.com/ui/rq-scheduler',
+    url='https://github.com/SiSTeRTech/rq-scheduler',
     license='MIT',
     description='Provides job scheduling capabilities to RQ (Redis Queue)',
     long_description=open('README.rst').read(),

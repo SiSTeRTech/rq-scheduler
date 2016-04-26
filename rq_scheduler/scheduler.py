@@ -68,7 +68,7 @@ class Scheduler(object):
         signal.signal(signal.SIGTERM, stop)
 
     def _create_job(self, func, args=None, kwargs=None, commit=True,
-                    result_ttl=None, ttl=None, id=None, description=None, queue_name=None):
+                    result_ttl=None, timeout=None, ttl=None, id=None, description=None, queue_name=None):
         """
         Creates an RQ job and saves it to Redis.
         """
@@ -77,7 +77,7 @@ class Scheduler(object):
         if kwargs is None:
             kwargs = {}
         job = Job.create(func, args=args, connection=self.connection,
-                         kwargs=kwargs, result_ttl=result_ttl, ttl=ttl, id=id, description=description)
+                         kwargs=kwargs, result_ttl=result_ttl, ttl=ttl, timeout=timeout, id=id, description=description)
         job.origin = queue_name or self.queue_name
         if commit:
             job.save()
@@ -106,13 +106,13 @@ class Scheduler(object):
                               job.id)
         return job
 
-    def enqueue_in(self, time_delta, func, *args, **kwargs):
+    def enqueue_in(self, time_delta, func, *args, **kwargs, timeout=None):
         """
         Similar to ``enqueue_at``, but accepts a timedelta instead of datetime object.
         The job's scheduled execution time will be calculated by adding the timedelta
         to datetime.utcnow().
         """
-        job = self._create_job(func, args=args, kwargs=kwargs)
+        job = self._create_job(func, args=args, kwargs=kwargs, timeout=timeout)
         self.connection._zadd(self.scheduled_jobs_key,
                               to_unix(datetime.utcnow() + time_delta),
                               job.id)

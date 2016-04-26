@@ -67,8 +67,8 @@ class Scheduler(object):
         signal.signal(signal.SIGINT, stop)
         signal.signal(signal.SIGTERM, stop)
 
-    def _create_job(self, func, timeout=None, args=None, kwargs=None, commit=True,
-                    result_ttl=None, ttl=None, id=None, description=None, queue_name=None):
+    def _create_job(self, func, args=None, kwargs=None, commit=True,
+                    result_ttl=None, ttl=None, timeout=None, id=None, description=None, queue_name=None):
         """
         Creates an RQ job and saves it to Redis.
         """
@@ -83,7 +83,7 @@ class Scheduler(object):
             job.save()
         return job
 
-    def enqueue_at(self, scheduled_time, func, *args, **kwargs):
+    def enqueue_at(self, scheduled_time, func, args=None, kwargs=None, timeout=None):
         """
         Pushes a job to the scheduler queue. The scheduled queue is a Redis sorted
         set ordered by timestamp - which in this case is job's scheduled execution time.
@@ -100,19 +100,19 @@ class Scheduler(object):
         scheduler = Scheduler(queue_name='default', connection=redis)
         scheduler.enqueue_at(datetime(2020, 1, 1), func, 'argument', keyword='argument')
         """
-        job = self._create_job(func, args=args, kwargs=kwargs)
+        job = self._create_job(func, args=args, kwargs=kwargs, timeout=timeout)
         self.connection._zadd(self.scheduled_jobs_key,
                               to_unix(scheduled_time),
                               job.id)
         return job
 
-    def enqueue_in(self, time_delta, func, timeout=None, *args, **kwargs):
+    def enqueue_in(self, time_delta, func, args=None, kwargs=None, timeout=None):
         """
         Similar to ``enqueue_at``, but accepts a timedelta instead of datetime object.
         The job's scheduled execution time will be calculated by adding the timedelta
         to datetime.utcnow().
         """
-        job = self._create_job(func, timeout=timeout, args=args, kwargs=kwargs)
+        job = self._create_job(func, args=args, kwargs=kwargs, timeout=timeout)
         self.connection._zadd(self.scheduled_jobs_key,
                               to_unix(datetime.utcnow() + time_delta),
                               job.id)
